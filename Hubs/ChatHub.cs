@@ -46,10 +46,6 @@ class ChatHub : Hub
             return;
         }
 
-        if(_context.Messages.Count() >= 18)
-            foreach(var m in _context.Messages.ToList())
-                _context.Messages.Remove(m);
-
         await _context.Messages.AddAsync(message);
         await _context.SaveChangesAsync();
         await Clients.All.SendAsync("NewMessage", message);
