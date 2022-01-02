@@ -30,7 +30,7 @@ class ChatHub : Hub
     public async Task GetAllMessages()
     {
         await Clients.All.SendAsync("UserCount", UserCount);
-        await Clients.Caller.SendAsync("AllMessages", _context.Messages.ToList());
+        await Clients.Caller.SendAsync("AllMessages", _context.Messages.ToList().OrderBy(m => m.Timestamp));
     }
 
     public async Task PostMessage(string username, string content)
