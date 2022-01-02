@@ -7,14 +7,29 @@ namespace Chat.Api.Hubs;
 class ChatHub : Hub
 {
     private readonly DataContext _context;
+    private static long UserCount = 0;
 
     public ChatHub(DataContext context)
     {
         _context = context;
     }
 
+    public override Task OnConnectedAsync()
+    {
+        UserCount++;
+        return base.OnConnectedAsync();
+    }
+
+    public override Task OnDisconnectedAsync(Exception exception)
+    {
+        UserCount--;
+        Clients.All.SendAsync("UserCount", UserCount);
+        return base.OnDisconnectedAsync(exception);
+    }
+
     public async Task GetAllMessages()
     {
+        await Clients.All.SendAsync("UserCount", UserCount);
         await Clients.Caller.SendAsync("AllMessages", _context.Messages.ToList());
     }
 
@@ -32,7 +47,8 @@ class ChatHub : Hub
         }
 
         if(_context.Messages.Count() >= 18)
-            _context.Messages.Remove(_context.Messages.First());
+            foreach(var m in _context.Messages.ToList())
+                _context.Messages.Remove(m);
 
         await _context.Messages.AddAsync(message);
         await _context.SaveChangesAsync();
