@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Chat.Api.Data;
 using Chat.Api.Models;
 using Microsoft.AspNetCore.SignalR;
@@ -23,6 +24,9 @@ class ChatHub : Hub
     public override Task OnDisconnectedAsync(Exception exception)
     {
         UserCount--;
+        var claim = Context.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
+        if(claim != null)
+            Clients.Others.SendAsync("Disconnected", claim.Value);
         Clients.All.SendAsync("UserCount", UserCount);
         return base.OnDisconnectedAsync(exception);
     }
@@ -53,6 +57,8 @@ class ChatHub : Hub
 
     public async Task UserConnected(string username)
     {
+        var claim = new List<Claim> { new Claim(ClaimTypes.Name, username) };
+        Context.User.AddIdentity(new ClaimsIdentity(claim));
         await Clients.Others.SendAsync("Connected", username);
     }
 
