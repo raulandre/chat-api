@@ -50,4 +50,14 @@ class ChatHub : Hub
         await _context.SaveChangesAsync();
         await Clients.All.SendAsync("NewMessage", message);
     }
+
+    public async Task UserConnected(string username)
+    {
+        await Clients.Others.SendAsync("Connected", username);
+    }
+
+    public async Task UserDisconnected(string username)
+    {
+        await Clients.Others.SendAsync("Disconnected", username);
+    }
 }
