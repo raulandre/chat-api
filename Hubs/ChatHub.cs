@@ -24,7 +24,7 @@ class ChatHub : Hub
     public override Task OnDisconnectedAsync(Exception exception)
     {
         UserCount--;
-        var claim = Context.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
+        var claim = Context.User.Claims.Where(c => c.Type == ClaimTypes.Name).LastOrDefault();
         if(claim != null)
             Clients.Others.SendAsync("Disconnected", claim.Value);
         Clients.All.SendAsync("UserCount", UserCount);
@@ -39,6 +39,10 @@ class ChatHub : Hub
 
     public async Task PostMessage(string username, string content)
     {
+
+        if(username.Length > 20 || content.Length > 999)
+            return;
+
         var message = new Message(username, content);
 
         if(message.Content.StartsWith('/') && message.Content.Contains("clear"))
@@ -65,5 +69,13 @@ class ChatHub : Hub
     public async Task UserDisconnected(string username)
     {
         await Clients.Others.SendAsync("Disconnected", username);
+    }
+
+    public async Task UsernameChange(string oldUsername, string newUsername)
+    {
+        var newclaim = new List<Claim> { new Claim(ClaimTypes.Name, newUsername) };
+        Context.User.AddIdentity(new ClaimsIdentity(newclaim));
+
+        await Clients.Others.SendAsync("UsernameChange", oldUsername, newUsername);
     }
 }
